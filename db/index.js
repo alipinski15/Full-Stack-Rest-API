@@ -20,7 +20,7 @@ fs
   .readdirSync(path.join(__dirname, 'models'))
   .forEach((file) => {
     console.info(`Importing database model from file: ${file}`);
-    const model = sequelize.import(path.join(__dirname, 'models', file));
+    const model = require(path.join(__dirname, 'models', file))(sequelize, Sequelize);
     models[model.name] = model;
   });
 
