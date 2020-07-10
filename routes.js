@@ -99,24 +99,16 @@ router.post('/users', [
     .isLength({ min: 8, max: 20 })
     .withMessage('Please provide a value for "password" that is between 8 and 20 characters in length'),
 ], asyncHandler(async( req, res ) => {
-  try {
     const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      const errorMessages = errors.array().map(error => error.msg);
-      res.status(400).json({ errors: errorMessages });
-    } else {
-      // Get the user from the request body.
-      const user = req.body;
-
-      // Hash the new user's password.
+    // Get the user from the request body.
+    const user = req.body;
+    if (user.password) {
       user.password = bcryptjs.hashSync(user.password);
-
-      const newUser = await User.create(user);
-
+    } 
+    try {
+      await User.create(user);
       // Set the status to 201 Created and end the response.
-      res.status(201).end();
-    }
+      res.status(201).location('/').end();
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       res.status(400).location('/').json({error: error.errors[0].message})
