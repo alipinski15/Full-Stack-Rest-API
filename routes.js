@@ -102,6 +102,10 @@ router.post('/users', [
     const errors = validationResult(req);
     // Get the user from the request body.
     const user = req.body;
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => error.msg);
+      res.status(400).json({ errors: errorMessages });
+    }
     if (user.password) {
       user.password = bcryptjs.hashSync(user.password);
     } 
