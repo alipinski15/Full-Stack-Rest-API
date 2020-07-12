@@ -8,7 +8,11 @@ const auth = require('basic-auth');
 // Construct a router instance.
 const router = express.Router();
 
-const { User, Course } = require('./db')
+const { User } = require('./models');
+const { Course } = require('./models');
+
+
+
 
 // const users = [];
 
@@ -37,6 +41,7 @@ const authenticateUser = asyncHandler(async(req, res, next) => {
         emailAddress: credentials.name,
       }
     })
+    
 
     // If a user was successfully retrieved from the data store...
     if (user) {
@@ -71,13 +76,15 @@ const authenticateUser = asyncHandler(async(req, res, next) => {
   }
 });
 
-router.get('/users', asyncHandler(async(req, res) => {
+router.get('/users', authenticateUser, asyncHandler(async(req, res) => {
   const user = req.currentUser;
+
   res.json({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    emailAddress: user.emailAddress,
+    Id: user.id,
+    Name: `${user.firstName} ${user.lastName}`,
+    Email: user.emailAddress
   });
+  res.status(200).end();
 }));
 
 // Route that creates a new user.
@@ -119,6 +126,52 @@ router.post('/users', [
     } else {
       throw error
     }
+  }
+}));
+
+/**
+ * Gets a list of available Courses
+ */
+
+router.get('/courses', asyncHandler(async(req, res) => {
+  const courses = await Course.findAll({
+    attributes: {
+      exclude: ['createdAt', 'updatedAt']
+    },
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'firstName', 'lastName', 'emailAddress']
+    }
+  });
+  if(courses) {
+    res.json(courses)
+    res.status(200).end();
+  } else {
+    res.status(404).json({ message: "No Courses found"})
+  }
+}));
+
+/**
+ * Get a specific Course based on the ID of the User.
+ */
+
+router.get('/courses/:id', asyncHandler(async(req, res) => {
+  const course = await Course.findByPk(req.params.id, {
+    attributes: {
+      exclude: ['createdAt', 'updatedAt']
+    },
+    include: {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'firstName', 'lastName', 'emailAddress']
+    }
+  });
+  if(course) {
+    res.json(course)
+    res.status(200).end();
+  } else {
+    res.status(404).json({ message: "No Courses found"})
   }
 }));
 
