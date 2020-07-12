@@ -180,6 +180,10 @@ router.get('/courses/:id', asyncHandler(async(req, res) => {
   }
 }));
 
+/**
+ * Creates new Course with user authentication.
+ */
+
 router.post('/courses', [
   check('title')
     .exists({ checkNull: true, checkFalsy: true })
