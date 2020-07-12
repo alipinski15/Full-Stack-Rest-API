@@ -27,7 +27,9 @@ function asyncHandler(cb){
   }
 }
 
-//Authenticate User
+/**
+ * Authenticate User
+ */
 
 const authenticateUser = asyncHandler(async(req, res, next) => {
   let message = null;
@@ -87,7 +89,10 @@ router.get('/users', authenticateUser, asyncHandler(async(req, res) => {
   res.status(200).end();
 }));
 
-// Route that creates a new user.
+/**
+ * Create new User
+ */
+
 router.post('/users', [
   check('firstName')
     .exists({ checkNull: true, checkFalsy: true })
@@ -173,6 +178,29 @@ router.get('/courses/:id', asyncHandler(async(req, res) => {
   } else {
     res.status(404).json({ message: "No Courses found"})
   }
+}));
+
+router.post('/courses', [
+  check('title')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a "Title"'),
+  check('description')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a "Description"'),
+  check('userId')
+    .exists({ checkNull: true, checkFalsy: true })
+    .withMessage('Please provide a "UserID"'),
+], authenticateUser, asyncHandler(async(res, req) => {
+  const errors = validationResult(req);
+    // Get the user from the request body.
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => error.msg);
+      res.status(400).json({ errors: errorMessages });
+    } else {
+      const course = await Course.create(req.body);
+      // Set the status to 201 Created and end the response.
+      res.status(201).location(`/courses/${course.id}`).end();
+    }
 }));
 
 module.exports = router;
