@@ -194,7 +194,7 @@ router.post('/courses', [
   check('userId')
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage('Please provide a "UserID"'),
-], authenticateUser, asyncHandler(async(res, req) => {
+], authenticateUser, asyncHandler(async(req, res) => {
   const errors = validationResult(req);
     // Get the user from the request body.
     if (!errors.isEmpty()) {
@@ -206,6 +206,56 @@ router.post('/courses', [
       // Set the status to 201 Created and end the response.
       res.status(201).location(`/courses/${courseId}`).end();
     }
+}));
+
+/**
+ * Allows authorized user to update a course.
+ */
+
+router.put('/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
+  const user = req.currentUser.dataValues.id;
+  const course = await Course.findByPk(req.params.id, {
+    attributes: {
+      exclude: ['createdAt', 'updatedAt']
+    },
+    include: {
+      model: User,
+      as: 'user'
+    }
+  })
+  if(course) {
+    if(course.dataValues.userId === user) {
+        const updated = await course.update(req.body);
+        if(updated) {
+          res.status(204).end();
+        } else {
+          res.status(400).json({ message: "Please enter data to be Updated"})
+        }
+    } else {
+      res.status(403).json({ message: "You are not Authorized" })
+    }
+  } else {
+    res.status(404).json({ message: "No courses found to Update" })
+  }
+}));
+
+/**
+ * Allows users to delete a course with authentication. 
+ */
+
+router.delete('/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
+  const user = req.currentUser.dataValues.id;
+  const course = await Course.findByPk(req.params.id)
+  if(course) {
+    if(course.dataValues.userId === user) {
+        await course.destroy();
+        res.status(204).end();
+    } else {
+      res.status(403).json({ message: "You are not Authorized" })
+    }
+  } else {
+    res.status(404).json({ message: "No courses found to Update" })
+  }
 }));
 
 module.exports = router;
