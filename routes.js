@@ -202,8 +202,9 @@ router.post('/courses', [
       res.status(400).json({ errors: errorMessages });
     } else {
       const course = await Course.create(req.body);
+      const courseId = course.dataValues.id
       // Set the status to 201 Created and end the response.
-      res.status(201).location(`/courses/${course.id}`).end();
+      res.status(201).location(`/courses/${courseId}`).end();
     }
 }));
 
