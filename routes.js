@@ -114,10 +114,21 @@ router.post('/users', [
     const errors = validationResult(req);
     // Get the user from the request body.
     const user = req.body;
+    //Get email from a User 
+    const existingEmail = await User.findOne({
+      where: {
+        emailAddress: req.body.emailAddress
+      }
+    })
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(error => error.msg);
       res.status(400).json({ errors: errorMessages });
     }
+    //Checks to see if an email already is being used when making a new User
+    if(existingEmail) {
+      res.status(400).json({ message: "This email is already in use"})
+    }
+    //Check for password and encrypt for privacy.
     if (user.password) {
       user.password = bcryptjs.hashSync(user.password);
     } 
@@ -196,7 +207,6 @@ router.post('/courses', [
     .withMessage('Please provide a "UserID"'),
 ], authenticateUser, asyncHandler(async(req, res) => {
   const errors = validationResult(req);
-    // Get the user from the request body.
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(error => error.msg);
       res.status(400).json({ errors: errorMessages });
@@ -244,7 +254,9 @@ router.put('/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
  */
 
 router.delete('/courses/:id', authenticateUser, asyncHandler(async(req, res) => {
+  //Get ID value from current User
   const user = req.currentUser.dataValues.id;
+  //Find Course based on ID parameter
   const course = await Course.findByPk(req.params.id)
   if(course) {
     if(course.dataValues.userId === user) {
