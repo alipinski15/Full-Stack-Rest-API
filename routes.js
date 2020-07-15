@@ -117,16 +117,16 @@ router.post('/users', [
       //Get email from a User 
       if (!errors.isEmpty()) {
         const errorMessages = errors.array().map(error => error.msg);
-        res.status(400).json({ errors: errorMessages });
+        return res.status(400).json({ errors: errorMessages });
       }
-      const validEmail = await User.findOne({
+      const exsistingEmail = await User.findOne({
         where: {
           emailAddress: req.body.emailAddress,
         }
       })
       //Checks to see if an email already is being used when making a new User
-      if(!validEmail) {
-        return res.status(400).json({ message: "This email is already in use"})
+      if(exsistingEmail) {
+        res.status(400).json({ message: "This email is already in use"})
       }
       //Check for password and encrypt for privacy.
       if(user.password) {
