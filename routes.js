@@ -8,13 +8,9 @@ const auth = require('basic-auth');
 // Construct a router instance.
 const router = express.Router();
 
+//Import models
 const { User } = require('./models');
 const { Course } = require('./models');
-
-
-
-
-// const users = [];
 
 /* Handler function to wrap each route. */
 function asyncHandler(cb){
@@ -43,8 +39,6 @@ const authenticateUser = asyncHandler(async(req, res, next) => {
         emailAddress: credentials.name,
       }
     })
-    
-
     // If a user was successfully retrieved from the data store...
     if (user) {
       const authenticated = bcryptjs
@@ -64,7 +58,6 @@ const authenticateUser = asyncHandler(async(req, res, next) => {
   } else {
     message = 'Auth header not found';
   }
-
   // If user authentication failed...
   if (message) {
     console.warn(message);
@@ -78,9 +71,11 @@ const authenticateUser = asyncHandler(async(req, res, next) => {
   }
 });
 
+/**
+ * Gets a list of Users based in ID, Name, and Email.
+ */
 router.get('/users', authenticateUser, asyncHandler(async(req, res) => {
   const user = req.currentUser;
-
   res.json({
     Id: user.id,
     Name: `${user.firstName} ${user.lastName}`,
@@ -119,13 +114,13 @@ router.post('/users', [
         const errorMessages = errors.array().map(error => error.msg);
         return res.status(400).json({ errors: errorMessages });
       }
-      const exsistingEmail = await User.findOne({
+      const existingEmail = await User.findOne({
         where: {
           emailAddress: req.body.emailAddress,
         }
       })
       //Checks to see if an email already is being used when making a new User
-      if(exsistingEmail) {
+      if(existingEmail) {
         res.status(400).json({ message: "This email is already in use"})
       }
       //Check for password and encrypt for privacy.
