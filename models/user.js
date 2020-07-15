@@ -23,6 +23,10 @@ module.exports = (sequelize) => {
       allowNull: false,
       validate: {
         notEmpty: {
+          msg: "Please provide an Email Address"
+        },
+        is: {
+          args: /^[^@]+@[^@.]+\.[a-z]+$/i,
           msg: "Please provide a valid Email Address"
         }
       },

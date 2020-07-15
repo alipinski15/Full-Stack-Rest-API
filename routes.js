@@ -111,33 +111,33 @@ router.post('/users', [
     .isLength({ min: 8, max: 20 })
     .withMessage('Please provide a value for "password" that is between 8 and 20 characters in length'),
 ], asyncHandler(async( req, res ) => {
-    const errors = validationResult(req);
-    // Get the user from the request body.
-    const user = req.body;
-    //Get email from a User 
-    const existingEmail = await User.findOne({
-      where: {
-        emailAddress: req.body.emailAddress
+      const errors = validationResult(req);
+      // Get the user from the request body.
+      const user = req.body;
+      //Get email from a User 
+      if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map(error => error.msg);
+        res.status(400).json({ errors: errorMessages });
       }
-    })
-    if (!errors.isEmpty()) {
-      const errorMessages = errors.array().map(error => error.msg);
-      res.status(400).json({ errors: errorMessages });
-    }
-    //Checks to see if an email already is being used when making a new User
-    if(existingEmail) {
-      res.status(400).json({ message: "This email is already in use"})
-    }
-    //Check for password and encrypt for privacy.
-    if (user.password) {
-      user.password = bcryptjs.hashSync(user.password);
-    } 
+      const validEmail = await User.findOne({
+        where: {
+          emailAddress: req.body.emailAddress,
+        }
+      })
+      //Checks to see if an email already is being used when making a new User
+      if(!validEmail) {
+        return res.status(400).json({ message: "This email is already in use"})
+      }
+      //Check for password and encrypt for privacy.
+      if(user.password) {
+        user.password = bcryptjs.hashSync(user.password);
+      } 
     try {
       await User.create(user);
       // Set the status to 201 Created and end the response.
       res.status(201).location('/').end();
   } catch (error) {
-    if (error.name === 'SequelizeValidationError') {
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       res.status(400).location('/').json({error: error.errors[0].message})
     } else {
       throw error
